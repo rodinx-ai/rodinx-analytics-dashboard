@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RodinX Analytics Dashboard | Аналитика экосистемы AI-агентов</title>
+    <meta name="description" content="Единая панель аналитики для экосистемы RodinX.ai - воронка, метрики, insights в реальном времени">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-purple: #667eea;
+            --accent-green: #38ef7d;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-green: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --gradient-blue: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: var(--gradient-purple);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: -0.25rem;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .header-stat {
+            text-align: center;
+        }
+
+        .header-stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent-green);
+        }
+
+        .header-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .period-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+        }
+
+        .period-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .period-btn.active {
+            background: var(--gradient-purple);
+            color: white;
+        }
+
+        .period-btn:hover:not(.active) {
+            background: var(--bg-secondary);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* METRICS GRID */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-purple);
+        }
+
+        .metric-card.green::before {
+            background: var(--gradient-green);
+        }
+
+        .metric-card.blue::before {
+            background: var(--gradient-blue);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .metric-icon {
+            font-size: 1.5rem;
+            opacity: 0.6;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-purple);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-card.green .metric-value {
+            background: var(--gradient-green);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-card.blue .metric-value {
+            background: var(--gradient-blue);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .metric-change.positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .metric-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        /* SECTION */
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title-icon {
+            font-size: 1.75rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* FUNNEL */
+        .funnel-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .funnel-stage {
+            background: var(--bg-tertiary);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .funnel-stage:hover {
+            background: #3f4c60;
+            transform: scale(1.02);
+        }
+
+        .funnel-stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .funnel-stage-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .funnel-stage-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--accent-purple);
+        }
+
+        .funnel-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .funnel-bar-fill {
+            height: 100%;
+            background: var(--gradient-purple);
+            transition: width 1s ease;
+            border-radius: 1rem;
+        }
+
+        .funnel-stage.green .funnel-bar-fill {
+            background: var(--gradient-green);
+        }
+
+        .funnel-stage-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .funnel-conversion {
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* GRID LAYOUT */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+        }
+
+        /* USER JOURNEY */
+        .journey-paths {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .journey-path {
+            background: var(--bg-tertiary);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+        }
+
+        .journey-path:hover {
+            background: #3f4c60;
+            transform: translateX(4px);
+        }
+
+        .journey-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--gradient-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        .journey-flow {
+            flex: 1;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .journey-arrow {
+            color: var(--text-muted);
+            margin: 0 0.5rem;
+        }
+
+        .journey-percentage {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--accent-green);
+            flex-shrink: 0;
+        }
+
+        /* HEATMAP */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: 120px repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        .heatmap-label {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .heatmap-day {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 0.5rem;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+        }
+
+        .heatmap-cell.high {
+            background: rgba(56, 239, 125, 0.3);
+            color: var(--accent-green);
+            border: 2px solid var(--accent-green);
+        }
+
+        .heatmap-cell.medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-orange);
+            border: 2px solid var(--accent-orange);
+        }
+
+        .heatmap-cell.low {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+            border: 2px solid var(--border);
+        }
+
+        .heatmap-legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 0.25rem;
+        }
+
+        /* INSIGHTS */
+        .insights-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .insight-item {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-purple);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: all 0.3s;
+        }
+
+        .insight-item:hover {
+            background: #3f4c60;
+            transform: translateX(4px);
+        }
+
+        .insight-item.critical {
+            border-left-color: var(--accent-red);
+        }
+
+        .insight-item.success {
+            border-left-color: var(--accent-green);
+        }
+
+        .insight-item.warning {
+            border-left-color: var(--accent-orange);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .insight-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .insight-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-left: 2.25rem;
+        }
+
+        .insight-action {
+            margin-top: 0.75rem;
+            margin-left: 2.25rem;
+            padding: 0.5rem 1rem;
+            background: var(--gradient-purple);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .insight-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* A/B TESTS TABLE */
+        .ab-tests-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .ab-tests-table thead {
+            background: var(--bg-tertiary);
+        }
+
+        .ab-tests-table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ab-tests-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        .ab-tests-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .test-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .test-status.running {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .test-status.completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .winner-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(56, 239, 125, 0.2);
+            color: var(--accent-green);
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .lift-positive {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .lift-negative {
+            color: var(--error);
+            font-weight: 700;
+        }
+
+        /* CHART CONTAINER */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .header-stats {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .section {
+                padding: 1.5rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .heatmap-grid {
+                grid-template-columns: 80px repeat(7, 1fr);
+                gap: 0.25rem;
+            }
+
+            .heatmap-label {
+                font-size: 0.75rem;
+            }
+
+            .heatmap-day {
+                font-size: 0.625rem;
+            }
+
+            .ab-tests-table {
+                font-size: 0.75rem;
+            }
+
+            .ab-tests-table th,
+            .ab-tests-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <div class="logo-text">
+                    <h1>RodinX Analytics</h1>
+                    <p>Аналитика экосистемы AI-агентов</p>
+                </div>
+            </div>
+
+            <div class="header-stats">
+                <div class="header-stat">
+                    <div class="header-stat-value">1,247</div>
+                    <div class="header-stat-label">Визиты</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value">13.2%</div>
+                    <div class="header-stat-label">Конверсия</div>
+                </div>
+                <div class="header-stat">
+                    <div class="header-stat-value">8</div>
+                    <div class="header-stat-label">Сделки</div>
+                </div>
+            </div>
+
+            <div class="period-selector">
+                <button class="period-btn">Сегодня</button>
+                <button class="period-btn active">Неделя</button>
+                <button class="period-btn">Месяц</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+
+        <!-- METRICS GRID -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">🌐 Визиты</div>
+                    <div class="metric-icon">👥</div>
+                </div>
+                <div class="metric-value">1,247</div>
+                <div class="metric-change positive">↑ +15% vs прошлая неделя</div>
+            </div>
+
+            <div class="metric-card green">
+                <div class="metric-header">
+                    <div class="metric-label">🎯 Конверсия в инструменты</div>
+                    <div class="metric-icon">📈</div>
+                </div>
+                <div class="metric-value">37.5%</div>
+                <div class="metric-change positive">↑ +8% vs прошлая неделя</div>
+            </div>
+
+            <div class="metric-card blue">
+                <div class="metric-header">
+                    <div class="metric-label">⚡ Среднее время</div>
+                    <div class="metric-icon">⏱️</div>
+                </div>
+                <div class="metric-value">4:32</div>
+                <div class="metric-change positive">↑ +0:45 vs прошлая неделя</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">💬 Переходы в Telegram</div>
+                    <div class="metric-icon">📱</div>
+                </div>
+                <div class="metric-value">165</div>
+                <div class="metric-change positive">↑ +22% vs прошлая неделя</div>
+            </div>
+
+            <div class="metric-card green">
+                <div class="metric-header">
+                    <div class="metric-label">🔥 Горячие лиды</div>
+                    <div class="metric-icon">🎯</div>
+                </div>
+                <div class="metric-value">42</div>
+                <div class="metric-change positive">↑ +18% vs прошлая неделя</div>
+            </div>
+
+            <div class="metric-card blue">
+                <div class="metric-header">
+                    <div class="metric-label">💰 Сделки закрыто</div>
+                    <div class="metric-icon">✅</div>
+                </div>
+                <div class="metric-value">8</div>
+                <div class="metric-change positive">↑ +2 vs прошлая неделя</div>
+            </div>
+        </div>
+
+        <!-- FUNNEL SECTION -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">
+                        <span class="section-title-icon">🔄</span>
+                        Воронка конверсии
+                    </div>
+                    <div class="section-subtitle">Путь пользователя от визита до сделки</div>
+                </div>
+            </div>
+
+            <div class="funnel-container">
+                <div class="funnel-stage">
+                    <div class="funnel-stage-header">
+                        <div class="funnel-stage-title">🌐 Визиты на лендинг</div>
+                        <div class="funnel-stage-value">1,247</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-bar-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="funnel-stage-stats">
+                        <span>Базовый уровень</span>
+                        <span class="funnel-conversion">100%</span>
+                    </div>
+                </div>
+
+                <div class="funnel-stage">
+                    <div class="funnel-stage-header">
+                        <div class="funnel-stage-title">🛠️ Использование инструментов</div>
+                        <div class="funnel-stage-value">468</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-bar-fill" style="width: 37.5%"></div>
+                    </div>
+                    <div class="funnel-stage-stats">
+                        <span>ROI: 220 • Квиз: 135 • КП: 113</span>
+                        <span class="funnel-conversion">37.5%</span>
+                    </div>
+                </div>
+
+                <div class="funnel-stage">
+                    <div class="funnel-stage-header">
+                        <div class="funnel-stage-title">💬 Переход в Telegram</div>
+                        <div class="funnel-stage-value">165</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-bar-fill" style="width: 13.2%"></div>
+                    </div>
+                    <div class="funnel-stage-stats">
+                        <span>Средняя конверсия из инструментов: 35.3%</span>
+                        <span class="funnel-conversion">13.2%</span>
+                    </div>
+                </div>
+
+                <div class="funnel-stage">
+                    <div class="funnel-stage-header">
+                        <div class="funnel-stage-title">🎯 Квалифицированные лиды</div>
+                        <div class="funnel-stage-value">42</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-bar-fill" style="width: 3.4%"></div>
+                    </div>
+                    <div class="funnel-stage-stats">
+                        <span>Конверсия из Telegram: 25.5%</span>
+                        <span class="funnel-conversion">3.4%</span>
+                    </div>
+                </div>
+
+                <div class="funnel-stage green">
+                    <div class="funnel-stage-header">
+                        <div class="funnel-stage-title">✅ Сделки закрыто</div>
+                        <div class="funnel-stage-value">8</div>
+                    </div>
+                    <div class="funnel-bar">
+                        <div class="funnel-bar-fill" style="width: 0.64%"></div>
+                    </div>
+                    <div class="funnel-stage-stats">
+                        <span>Конверсия из лидов: 19% • Ср. чек: 306,000 ₽</span>
+                        <span class="funnel-conversion">0.64%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USER JOURNEY & HEATMAP -->
+        <div class="grid-2">
+            <!-- USER JOURNEY -->
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <div class="section-title">
+                            <span class="section-title-icon">🗺️</span>
+                            User Journey
+                        </div>
+                        <div class="section-subtitle">Популярные пути пользователей</div>
+                    </div>
+                </div>
+
+                <div class="journey-paths">
+                    <div class="journey-path">
+                        <div class="journey-number">1</div>
+                        <div class="journey-flow">
+                            Лендинг <span class="journey-arrow">→</span> ROI <span class="journey-arrow">→</span> Telegram
+                        </div>
+                        <div class="journey-percentage">45%</div>
+                    </div>
+
+                    <div class="journey-path">
+                        <div class="journey-number">2</div>
+                        <div class="journey-flow">
+                            Лендинг <span class="journey-arrow">→</span> Квиз <span class="journey-arrow">→</span> ROI <span class="journey-arrow">→</span> Telegram
+                        </div>
+                        <div class="journey-percentage">25%</div>
+                    </div>
+
+                    <div class="journey-path">
+                        <div class="journey-number">3</div>
+                        <div class="journey-flow">
+                            КП <span class="journey-arrow">→</span> PDF <span class="journey-arrow">→</span> Уход
+                        </div>
+                        <div class="journey-percentage">18%</div>
+                    </div>
+
+                    <div class="journey-path">
+                        <div class="journey-number">4</div>
+                        <div class="journey-flow">
+                            Лендинг <span class="journey-arrow">→</span> Читает <span class="journey-arrow">→</span> Уход
+                        </div>
+                        <div class="journey-percentage">12%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HEATMAP -->
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <div class="section-title">
+                            <span class="section-title-icon">🔥</span>
+                            Активность по дням
+                        </div>
+                        <div class="section-subtitle">Heatmap использования инструментов</div>
+                    </div>
+                </div>
+
+                <div class="heatmap-grid">
+                    <div></div>
+                    <div class="heatmap-day">ПН</div>
+                    <div class="heatmap-day">ВТ</div>
+                    <div class="heatmap-day">СР</div>
+                    <div class="heatmap-day">ЧТ</div>
+                    <div class="heatmap-day">ПТ</div>
+                    <div class="heatmap-day">СБ</div>
+                    <div class="heatmap-day">ВС</div>
+
+                    <div class="heatmap-label">📊 ROI</div>
+                    <div class="heatmap-cell high">65</div>
+                    <div class="heatmap-cell high">72</div>
+                    <div class="heatmap-cell medium">48</div>
+                    <div class="heatmap-cell high">68</div>
+                    <div class="heatmap-cell high">81</div>
+                    <div class="heatmap-cell medium">42</div>
+                    <div class="heatmap-cell medium">35</div>
+
+                    <div class="heatmap-label">🤖 Квиз</div>
+                    <div class="heatmap-cell medium">28</div>
+                    <div class="heatmap-cell medium">35</div>
+                    <div class="heatmap-cell medium">32</div>
+                    <div class="heatmap-cell medium">38</div>
+                    <div class="heatmap-cell medium">41</div>
+                    <div class="heatmap-cell low">18</div>
+                    <div class="heatmap-cell low">15</div>
+
+                    <div class="heatmap-label">📋 КП</div>
+                    <div class="heatmap-cell low">12</div>
+                    <div class="heatmap-cell low">15</div>
+                    <div class="heatmap-cell medium">22</div>
+                    <div class="heatmap-cell medium">28</div>
+                    <div class="heatmap-cell high">52</div>
+                    <div class="heatmap-cell low">8</div>
+                    <div class="heatmap-cell low">6</div>
+                </div>
+
+                <div class="heatmap-legend">
+                    <div class="legend-item">
+                        <div class="legend-color high"></div>
+                        <span>Высокая (50+)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color medium"></div>
+                        <span>Средняя (20-50)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color low"></div>
+                        <span>Низкая (<20)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP INSIGHTS -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">
+                        <span class="section-title-icon">💡</span>
+                        Ключевые инсайты
+                    </div>
+                    <div class="section-subtitle">AI-генерируемые рекомендации на основе данных</div>
+                </div>
+            </div>
+
+            <div class="insights-list">
+                <div class="insight-item success">
+                    <div class="insight-header">
+                        <div class="insight-icon">🚀</div>
+                        <div class="insight-title">ROI Калькулятор показывает +35% конверсию</div>
+                    </div>
+                    <div class="insight-text">
+                        Самый эффективный инструмент экосистемы. Пользователи проводят в среднем 2:18 мин, 
+                        75% скачивают PDF, 42% переходят в Telegram. Рекомендация: направить 60-70% рекламного 
+                        бюджета на этот инструмент.
+                    </div>
+                    <button class="insight-action">Посмотреть детали →</button>
+                </div>
+
+                <div class="insight-item critical">
+                    <div class="insight-header">
+                        <div class="insight-icon">⚠️</div>
+                        <div class="insight-title">Высокий отток на этапе заполнения формы КП</div>
+                    </div>
+                    <div class="insight-text">
+                        58% пользователей начинают заполнять форму КП, но только 23% доходят до конца. 
+                        Проблемные поля: "Текущие показатели" (4 поля), "Цели и пожелания" (большой textarea). 
+                        Рекомендация: упростить форму до 8 полей вместо 15.
+                    </div>
+                    <button class="insight-action">Оптимизировать форму →</button>
+                </div>
+
+                <div class="insight-item warning">
+                    <div class="insight-header">
+                        <div class="insight-icon">📅</div>
+                        <div class="insight-title">Пик активности: Вторник 10-12 и Четверг 15-17</div>
+                    </div>
+                    <div class="insight-text">
+                        Конверсия в Telegram в эти временные окна на 45% выше среднего. КП калькулятор 
+                        популярен в четверг-пятницу (подготовка к принятию решений на неделю). 
+                        Рекомендация: запускать рекламные кампании во вторник утром и четверг днём.
+                    </div>
+                </div>
+
+                <div class="insight-item success">
+                    <div class="insight-header">
+                        <div class="insight-icon">💬</div>
+                        <div class="insight-title">65% лидов возвращаются через Telegram</div>
+                    </div>
+                    <div class="insight-text">
+                        Telegram стал главным каналом коммуникации и закрытия сделок. Средний цикл 
+                        от первого визита до сделки: 3.5 дня (vs 7-14 дней у конкурентов). 
+                        Рекомендация: усилить присутствие в Telegram, добавить автоматизацию первичных ответов.
+                    </div>
+                </div>
+
+                <div class="insight-item warning">
+                    <div class="insight-header">
+                        <div class="insight-icon">📱</div>
+                        <div class="insight-title">38% трафика с мобильных, но конверсия ниже на 22%</div>
+                    </div>
+                    <div class="insight-text">
+                        Мобильные пользователи активны, но конвертируются хуже (11% vs 16% на desktop). 
+                        Основная проблема: формы КП сложно заполнять на телефоне. Рекомендация: 
+                        создать упрощённую мобильную версию или lead-форму с минимумом полей.
+                    </div>
+                    <button class="insight-action">Улучшить mobile UX →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- A/B TESTS -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">
+                        <span class="section-title-icon">🧪</span>
+                        A/B тестирование
+                    </div>
+                    <div class="section-subtitle">Активные и завершённые эксперименты</div>
+                </div>
+            </div>
+
+            <table class="ab-tests-table">
+                <thead>
+                    <tr>
+                        <th>Название теста</th>
+                        <th>Вариант A</th>
+                        <th>Вариант B</th>
+                        <th>Победитель</th>
+                        <th>Улучшение</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Hero заголовок</strong></td>
+                        <td>AI-агенты для бизнеса</td>
+                        <td>Автоматизация через AI</td>
+                        <td><span class="winner-badge">🏆 A</span></td>
+                        <td><span class="lift-positive">+12%</span></td>
+                        <td><span class="test-status completed">Завершён</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>CTA кнопка</strong></td>
+                        <td>Рассчитать экономию</td>
+                        <td>Узнать ROI</td>
+                        <td><span class="winner-badge">🏆 A</span></td>
+                        <td><span class="lift-positive">+8%</span></td>
+                        <td><span class="test-status completed">Завершён</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Цены на лендинге</strong></td>
+                        <td>Скрыты</td>
+                        <td>Показаны (MVP/Standard/Enterprise)</td>
+                        <td><span class="winner-badge">🏆 B</span></td>
+                        <td><span class="lift-positive">+22%</span></td>
+                        <td><span class="test-status completed">Завершён</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>ROI калькулятор: расположение CTA</strong></td>
+                        <td>Кнопка внизу</td>
+                        <td>Sticky sidebar с кнопкой</td>
+                        <td><span class="winner-badge">🏆 B</span></td>
+                        <td><span class="lift-positive">+18%</span></td>
+                        <td><span class="test-status completed">Завершён</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Форма КП: количество полей</strong></td>
+                        <td>15 полей (полная)</td>
+                        <td>8 полей (упрощённая)</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><span class="test-status running">В процессе</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email capture перед PDF</strong></td>
+                        <td>Без email</td>
+                        <td>Запрос email перед скачиванием</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><span class="test-status running">В процессе</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CONVERSION TRENDS -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">
+                        <span class="section-title-icon">📈</span>
+                        Тренды конверсии
+                    </div>
+                    <div class="section-subtitle">Динамика конверсии по дням недели</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="conversionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- REVENUE FORECAST -->
+        <div class="section">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">
+                        <span class="section-title-icon">💰</span>
+                        Прогноз дохода
+                    </div>
+                    <div class="section-subtitle">Факт vs прогноз при текущих трендах</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // CONVERSION TRENDS CHART
+        const conversionCtx = document.getElementById('conversionChart').getContext('2d');
+        const conversionChart = new Chart(conversionCtx, {
+            type: 'line',
+            data: {
+                labels: ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'],
+                datasets: [
+                    {
+                        label: 'ROI Калькулятор',
+                        data: [32, 38, 28, 35, 42, 25, 22],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Квиз',
+                        data: [18, 22, 20, 24, 26, 12, 10],
+                        borderColor: '#38ef7d',
+                        backgroundColor: 'rgba(56, 239, 125, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'КП',
+                        data: [8, 10, 15, 18, 28, 5, 4],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#cbd5e1',
+                            font: {
+                                size: 12,
+                                weight: 600
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#94a3b8',
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#94a3b8'
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
+                    }
+                }
+            }
+        });
+
+        // REVENUE FORECAST CHART
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь'],
+                datasets: [
+                    {
+                        label: 'Факт',
+                        data: [450, 520, 680, 820, 0, 0],
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: '#667eea',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Прогноз',
+                        data: [0, 0, 0, 0, 980, 1150],
+                        backgroundColor: 'rgba(56, 239, 125, 0.6)',
+                        borderColor: '#38ef7d',
+                        borderWidth: 2,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#cbd5e1',
+                            font: {
+                                size: 12,
+                                weight: 600
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#94a3b8',
+                            callback: function(value) {
+                                return value + 'k ₽';
+                            }
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#94a3b8'
+                        },
+                        grid: {
+                            color: '#334155'
+                        }
+                    }
+                }
+            }
+        });
+
+        // PERIOD SELECTOR
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                console.log('Period changed to:', this.textContent);
+                // Здесь можно добавить загрузку данных за выбранный период
+            });
+        });
+
+        // INSIGHT ACTIONS
+        document.querySelectorAll('.insight-action').forEach(btn => {
+            btn.addEventListener('click', function() {
+                console.log('Insight action clicked:', this.closest('.insight-item').querySelector('.insight-title').textContent);
+                alert('Функция в разработке: переход к детальному анализу');
+            });
+        });
+
+        // HEATMAP CELL HOVER
+        document.querySelectorAll('.heatmap-cell').forEach(cell => {
+            cell.addEventListener('mouseenter', function() {
+                const value = this.textContent;
+                const row = this.parentElement;
+                const cellIndex = Array.from(row.children).indexOf(this);
+                const day = document.querySelectorAll('.heatmap-day')[cellIndex - 1]?.textContent || '';
+                const tool = row.querySelector('.heatmap-label')?.textContent || '';
+
+                console.log(`${tool} - ${day}: ${value} использований`);
+            });
+        });
+
+        console.log('🚀 RodinX Analytics Dashboard loaded!');
+        console.log('📊 Mock данные загружены');
+        console.log('💡 Готов к интеграции с реальными источниками');
+    </script>
+
+</body>
+</html>
